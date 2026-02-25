@@ -28,7 +28,7 @@ async function sendBuyNowAlert(chatId, coin) {
     `${coin.name}\n\n` +
     `💰 Price: \`${coin.price}\`\n` +
     `🛡 Safety: ${coin.safety_score} | ⚡ Momentum: ${coin.momentum_score}\n\n` +
-    `👉 [View on PumpRadar](http://localhost:3000/coin/${coin.coin_id})`;
+    `👉 [View on PumpRadar](https://pumparadar.vercel.app/coin/${coin.coin_id})`;
   return sendMessage(chatId, text);
 }
 
