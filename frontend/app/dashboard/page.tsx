@@ -89,7 +89,7 @@ function formatPrice(price: number) {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const [coins, setCoins] = useState<Coin[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -99,7 +99,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (status === 'unauthenticated') router.replace('/sign-in');
-  }, [status, router]);
+    if (status === 'authenticated' && (session?.user as { isNew?: boolean })?.isNew) {
+      router.replace('/account');
+    }
+  }, [status, session, router]);
 
   async function fetchCoins(showLoading = false) {
     if (showLoading) setLoading(true);

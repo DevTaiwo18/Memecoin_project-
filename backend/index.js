@@ -6,6 +6,7 @@ const cors = require('cors');
 
 const { collectAndStore, cleanupStaleCoins } = require('./collectors');
 const { runScoringEngine } = require('./scoring/engine');
+const { sendMessage, startPolling } = require('./telegram');
 const coinRoutes = require('./routes/coins');
 const userRoutes = require('./routes/users');
 
@@ -21,12 +22,25 @@ app.get('/', (_req, res) => {
   res.json({ status: 'Memecoin Platform API is running' });
 });
 
+// Telegram webhook — bot replies to /start with the user's Chat ID
+app.post('/api/telegram/webhook', (req, res) => {
+  const message = req.body?.message;
+  if (message?.text === '/start') {
+    const chatId = message.chat.id;
+    sendMessage(chatId,
+      `👋 Welcome to *PumpRadar*!\n\nYour Chat ID is:\n\`${chatId}\`\n\nCopy it and paste it into your PumpRadar account page to activate Buy Now alerts.`
+    ).catch(console.error);
+  }
+  res.sendStatus(200);
+});
+
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => console.log(`[Server] Running on port ${PORT}`));
 
+    startPolling();
     collectAndStore().then(() => runScoringEngine());
 
     cron.schedule('*/5 * * * *', async () => {

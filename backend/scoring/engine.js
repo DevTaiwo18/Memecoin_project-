@@ -1,5 +1,7 @@
 const Metric = require('../models/Metric');
 const Score = require('../models/Score');
+const User = require('../models/User');
+const { sendBuyNowAlert } = require('../telegram');
 
 function calcSafetyScore(metric) {
   let score = 0;
@@ -88,13 +90,34 @@ async function runScoringEngine() {
       { $group: { _id: '$coin_id', metric: { $first: '$$ROOT' } } }
     ]);
 
+    const usersWithTelegram = await User.find({ telegram_chat_id: { $ne: null } }).lean();
+
     for (const { _id: coin_id, metric } of coins) {
       const safety_score = calcSafetyScore(metric);
       const momentum_score = calcMomentumScore(metric);
       const composite_score = Math.round((safety_score * 0.4) + (momentum_score * 0.6));
       const signal = calcSignal(safety_score, momentum_score, composite_score, metric);
 
+      const prev = await Score.findOne({ coin_id }).sort({ timestamp: -1 });
+      const wasNotBuyNow = !prev || prev.signal !== 'Buy Now';
+
       await Score.create({ coin_id, safety_score, momentum_score, composite_score, signal });
+
+      if (signal === 'Buy Now' && wasNotBuyNow && usersWithTelegram.length > 0) {
+        const coinData = {
+          coin_id,
+          symbol: metric.symbol,
+          name: metric.name,
+          price: metric.price < 0.0001 ? metric.price.toExponential(2) : `$${metric.price.toFixed(6)}`,
+          safety_score,
+          momentum_score,
+        };
+        for (const user of usersWithTelegram) {
+          sendBuyNowAlert(user.telegram_chat_id, coinData).catch(err =>
+            console.error(`[Telegram] Failed to alert ${user.telegram_chat_id}:`, err.message)
+          );
+        }
+      }
     }
   } catch (err) {
     console.error(err.message);

@@ -2,16 +2,51 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 
 export default function AccountPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [chatId, setChatId] = useState('');
+  const [telegramStatus, setTelegramStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [connected, setConnected] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') router.replace('/sign-in');
   }, [status, router]);
+
+  useEffect(() => {
+    if (!session?.user) return;
+    const google_id = (session.user as { google_id?: string }).google_id;
+    if (!google_id) return;
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${google_id}`)
+      .then(r => r.json())
+      .then(data => { if (data.data?.telegram_chat_id) setConnected(true); })
+      .catch(() => {});
+  }, [session]);
+
+  async function connectTelegram() {
+    const google_id = (session?.user as { google_id?: string })?.google_id;
+    if (!google_id || !chatId.trim()) return;
+    setTelegramStatus('loading');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/connect-telegram`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ google_id, telegram_chat_id: chatId.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTelegramStatus('success');
+        setConnected(true);
+      } else {
+        setTelegramStatus('error');
+      }
+    } catch {
+      setTelegramStatus('error');
+    }
+  }
 
   if (status === 'loading' || !session) {
     return (
@@ -64,13 +99,43 @@ export default function AccountPage() {
               </div>
             </div>
 
+            {/* Telegram card */}
             <div className="bg-white/3 border border-white/6 rounded-2xl p-4">
-              <div className="text-gray-500 text-xs mb-1">Telegram alerts</div>
-              <div className="flex items-center justify-between">
-                <div className="text-amber-400 text-sm font-medium">Not connected yet</div>
-                <span className="text-xs text-gray-600 bg-white/4 px-2 py-1 rounded-lg">Coming soon</span>
-              </div>
-              <div className="text-gray-600 text-xs mt-1">Connect Telegram to get instant Buy Now alerts.</div>
+              <div className="text-gray-500 text-xs mb-2">Telegram alerts</div>
+
+              {connected ? (
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span className="text-emerald-400 text-sm font-medium">Connected — Buy Now alerts are active</span>
+                </div>
+              ) : (
+                <>
+                  <p className="text-gray-400 text-xs mb-3 leading-relaxed">
+                    1. Open Telegram and start <span className="text-white font-medium">@PumpRadar_bot</span><br />
+                    2. Send <span className="font-mono text-cyan-400">/start</span> — the bot will reply with your Chat ID<br />
+                    3. Paste your Chat ID below
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={chatId}
+                      onChange={e => setChatId(e.target.value)}
+                      placeholder="Your Telegram Chat ID"
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-white/20"
+                    />
+                    <button
+                      onClick={connectTelegram}
+                      disabled={telegramStatus === 'loading' || !chatId.trim()}
+                      className="cursor-pointer px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 text-white text-sm font-medium transition-all"
+                    >
+                      {telegramStatus === 'loading' ? '...' : 'Connect'}
+                    </button>
+                  </div>
+                  {telegramStatus === 'error' && (
+                    <p className="text-red-400 text-xs mt-2">Something went wrong. Check your Chat ID and try again.</p>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
