@@ -5,7 +5,8 @@ const ScoreSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
   safety_score: { type: Number, min: 0, max: 100 },
   momentum_score: { type: Number, min: 0, max: 100 },
-  composite_score: { type: Number, min: 0, max: 100 }
+  composite_score: { type: Number, min: 0, max: 100 },
+  signal: { type: String }
 });
 
 ScoreSchema.index({ coin_id: 1, timestamp: -1 });

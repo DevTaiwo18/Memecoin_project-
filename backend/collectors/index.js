@@ -1,6 +1,7 @@
 const { getTrendingSolana } = require('./dexscreener');
 const Coin = require('../models/Coin');
 const Metric = require('../models/Metric');
+const Score = require('../models/Score');
 
 async function collectAndStore() {
   try {
@@ -55,4 +56,27 @@ async function collectAndStore() {
   }
 }
 
-module.exports = { collectAndStore };
+async function cleanupStaleCoins() {
+  try {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const latestMetrics = await Metric.aggregate([
+      { $sort: { timestamp: -1 } },
+      { $group: { _id: '$coin_id', lastSeen: { $first: '$timestamp' } } }
+    ]);
+
+    const staleIds = latestMetrics
+      .filter(m => m.lastSeen < twoHoursAgo)
+      .map(m => m._id);
+
+    if (staleIds.length > 0) {
+      await Coin.deleteMany({ coin_id: { $in: staleIds } });
+      await Metric.deleteMany({ coin_id: { $in: staleIds } });
+      await Score.deleteMany({ coin_id: { $in: staleIds } });
+      console.log(`[Cleanup] Removed ${staleIds.length} stale coins`);
+    }
+  } catch (err) {
+    console.error(err.message);
+  }
+}
+
+module.exports = { collectAndStore, cleanupStaleCoins };

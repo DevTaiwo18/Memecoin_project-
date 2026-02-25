@@ -4,7 +4,8 @@ const mongoose = require('mongoose');
 const cron = require('node-cron');
 const cors = require('cors');
 
-const { collectAndStore } = require('./collectors');
+const { collectAndStore, cleanupStaleCoins } = require('./collectors');
+const { runScoringEngine } = require('./scoring/engine');
 const coinRoutes = require('./routes/coins');
 
 const app = express();
@@ -24,9 +25,13 @@ mongoose
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => console.log(`[Server] Running on port ${PORT}`));
 
-    collectAndStore();
+    collectAndStore().then(() => runScoringEngine());
 
-    cron.schedule('*/5 * * * *', () => collectAndStore());
+    cron.schedule('*/5 * * * *', async () => {
+      await collectAndStore();
+      await runScoringEngine();
+      await cleanupStaleCoins();
+    });
   })
   .catch((err) => {
     console.error(err.message);
