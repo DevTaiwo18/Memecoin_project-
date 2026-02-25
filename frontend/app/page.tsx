@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 interface Metric {
@@ -84,6 +85,7 @@ function formatPrice(price: number) {
 }
 
 export default function Dashboard() {
+  const router = useRouter();
   const [coins, setCoins] = useState<Coin[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>('');
@@ -251,7 +253,7 @@ export default function Dashboard() {
                   {sorted.map((coin, i) => {
                     const isBuyNow = coin.score?.signal === 'Buy Now';
                     return (
-                      <tr key={coin.coin_id} className={`transition-colors ${isBuyNow ? 'bg-emerald-500/3 hover:bg-emerald-500/6' : 'hover:bg-white/2'}`}>
+                      <tr key={coin.coin_id} onClick={() => router.push(`/coin/${coin.coin_id}`)} className={`cursor-pointer transition-colors ${isBuyNow ? 'bg-emerald-500/3 hover:bg-emerald-500/6' : 'hover:bg-white/2'}`}>
                         <td className="px-5 py-4 text-gray-600 text-xs">{i + 1}</td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
@@ -291,7 +293,7 @@ export default function Dashboard() {
               {sorted.map((coin, i) => {
                 const isBuyNow = coin.score?.signal === 'Buy Now';
                 return (
-                  <div key={coin.coin_id} className={`rounded-2xl border p-4 ${isBuyNow ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-white/2 border-white/6'}`}>
+                  <div key={coin.coin_id} onClick={() => router.push(`/coin/${coin.coin_id}`)} className={`cursor-pointer rounded-2xl border p-4 ${isBuyNow ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-white/2 border-white/6'}`}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <span className="text-gray-600 text-xs w-4">{i + 1}</span>
