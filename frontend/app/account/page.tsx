@@ -111,7 +111,7 @@ export default function AccountPage() {
               ) : (
                 <>
                   <p className="text-gray-400 text-xs mb-3 leading-relaxed">
-                    1. Open Telegram and start <span className="text-white font-medium">@PumpRadar_bot</span><br />
+                    1. Open Telegram and start <span className="text-white font-medium">@PumpRadarAlerts_bot</span><br />
                     2. Send <span className="font-mono text-cyan-400">/start</span> — the bot will reply with your Chat ID<br />
                     3. Paste your Chat ID below
                   </p>

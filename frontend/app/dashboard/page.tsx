@@ -92,6 +92,7 @@ export default function Dashboard() {
   const { data: session, status } = useSession();
   const [coins, setCoins] = useState<Coin[]>([]);
   const [loading, setLoading] = useState(true);
+  const [telegramConnected, setTelegramConnected] = useState(true);
 
   const [sortBy, setSortBy] = useState<'composite' | 'momentum' | 'safety'>('composite');
   const [activeFilter, setActiveFilter] = useState<'all' | 'Buy Now' | 'Keep Watching' | 'Likely Rug' | 'Danger'>('all');
@@ -99,10 +100,16 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (status === 'unauthenticated') router.replace('/sign-in');
-    if (status === 'authenticated' && (session?.user as { isNew?: boolean })?.isNew) {
-      router.replace('/account');
-    }
-  }, [status, session, router]);
+  }, [status, router]);
+
+  useEffect(() => {
+    const google_id = (session?.user as { google_id?: string })?.google_id;
+    if (!google_id) return;
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${google_id}`)
+      .then(r => r.json())
+      .then(data => { if (!data.data?.telegram_chat_id) setTelegramConnected(false); })
+      .catch(() => {});
+  }, [session]);
 
   async function fetchCoins(showLoading = false) {
     if (showLoading) setLoading(true);
@@ -152,6 +159,19 @@ export default function Dashboard() {
       <Navbar />
 
       <div className="max-w-350 mx-auto px-4 md:px-8 py-6 md:py-8">
+
+        {/* Telegram banner */}
+        {!telegramConnected && (
+          <div className="flex items-center justify-between gap-3 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl px-4 py-3 mb-6">
+            <div className="flex items-center gap-3">
+              <span className="text-cyan-400 text-lg">💬</span>
+              <span className="text-cyan-300 text-sm">Connect Telegram to get instant <strong>Buy Now</strong> alerts.</span>
+            </div>
+            <a href="/account" className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 transition-all whitespace-nowrap">
+              Connect now
+            </a>
+          </div>
+        )}
 
         {/* Hero */}
         <div className="mb-8">
