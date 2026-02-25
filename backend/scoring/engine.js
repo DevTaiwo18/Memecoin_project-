@@ -1,5 +1,6 @@
 const Metric = require('../models/Metric');
 const Score = require('../models/Score');
+const Coin = require('../models/Coin');
 const User = require('../models/User');
 const { sendBuyNowAlert } = require('../telegram');
 
@@ -104,10 +105,11 @@ async function runScoringEngine() {
       await Score.create({ coin_id, safety_score, momentum_score, composite_score, signal });
 
       if (signal === 'Buy Now' && wasNotBuyNow && usersWithTelegram.length > 0) {
+        const coin = await Coin.findOne({ coin_id }).lean();
         const coinData = {
           coin_id,
-          symbol: metric.symbol,
-          name: metric.name,
+          symbol: coin?.symbol || coin_id,
+          name: coin?.name || coin_id,
           price: metric.price < 0.0001 ? metric.price.toExponential(2) : `$${metric.price.toFixed(6)}`,
           safety_score,
           momentum_score,
