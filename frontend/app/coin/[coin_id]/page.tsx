@@ -197,7 +197,7 @@ export default function CoinPage() {
                 <div className="flex items-center gap-3 flex-wrap">
                   {signal && <SignalBadge signal={signal} />}
                   <div className="text-right">
-                    <div className="text-xl md:text-2xl font-bold text-white">{formatPrice(metric?.price)}</div>
+                    <div className="text-xl md:text-2xl font-bold text-white">{formatPrice(metric?.price ?? 0)}</div>
                     <div className="text-xs text-gray-500">Current price</div>
                   </div>
                 </div>
@@ -236,25 +236,25 @@ export default function CoinPage() {
 
             {/* Price changes */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-              <PriceChange value={metric?.price_change_5m} label="5 min" />
-              <PriceChange value={metric?.price_change_1h} label="1 hour" />
-              <PriceChange value={metric?.price_change_6h} label="6 hours" />
-              <PriceChange value={metric?.price_change_24h} label="24 hours" />
+              <PriceChange value={metric?.price_change_5m ?? 0} label="5 min" />
+              <PriceChange value={metric?.price_change_1h ?? 0} label="1 hour" />
+              <PriceChange value={metric?.price_change_6h ?? 0} label="6 hours" />
+              <PriceChange value={metric?.price_change_24h ?? 0} label="24 hours" />
             </div>
 
             {/* Stats row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
               <div className="bg-white/3 border border-white/6 rounded-2xl p-4">
                 <div className="text-gray-500 text-xs mb-1">Volume (24h)</div>
-                <div className="text-white font-bold">{formatNumber(metric?.volume)}</div>
+                <div className="text-white font-bold">{formatNumber(metric?.volume ?? 0)}</div>
               </div>
               <div className="bg-white/3 border border-white/6 rounded-2xl p-4">
                 <div className="text-gray-500 text-xs mb-1">Liquidity</div>
-                <div className="text-white font-bold">{formatNumber(metric?.liquidity)}</div>
+                <div className="text-white font-bold">{formatNumber(metric?.liquidity ?? 0)}</div>
               </div>
               <div className="bg-white/3 border border-white/6 rounded-2xl p-4">
                 <div className="text-gray-500 text-xs mb-1">Market Cap</div>
-                <div className="text-white font-bold">{formatNumber(metric?.market_cap)}</div>
+                <div className="text-white font-bold">{formatNumber(metric?.market_cap ?? 0)}</div>
               </div>
               <div className="bg-white/3 border border-white/6 rounded-2xl p-4">
                 <div className="text-gray-500 text-xs mb-1">Buys / Sells (24h)</div>
