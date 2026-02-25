@@ -7,6 +7,7 @@ const cors = require('cors');
 const { collectAndStore, cleanupStaleCoins } = require('./collectors');
 const { runScoringEngine } = require('./scoring/engine');
 const coinRoutes = require('./routes/coins');
+const userRoutes = require('./routes/users');
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/coins', coinRoutes);
+app.use('/api/users', userRoutes);
 
 app.get('/', (_req, res) => {
   res.json({ status: 'Memecoin Platform API is running' });
