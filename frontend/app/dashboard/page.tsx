@@ -93,6 +93,7 @@ export default function Dashboard() {
   const [coins, setCoins] = useState<Coin[]>([]);
   const [loading, setLoading] = useState(true);
   const [telegramConnected, setTelegramConnected] = useState(true);
+  const [holdings, setHoldings] = useState<{ coin_id: string; amount_invested: number; buy_price: number }[]>([]);
 
   const [sortBy, setSortBy] = useState<'composite' | 'momentum' | 'safety'>('composite');
   const [activeFilter, setActiveFilter] = useState<'all' | 'Buy Now' | 'Keep Watching' | 'Likely Rug' | 'Danger'>('all');
@@ -108,6 +109,10 @@ export default function Dashboard() {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${google_id}`)
       .then(r => r.json())
       .then(data => { if (!data.data?.telegram_chat_id) setTelegramConnected(false); })
+      .catch(() => {});
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/holdings/${google_id}`)
+      .then(r => r.json())
+      .then(data => { if (data.success) setHoldings(data.data || []); })
       .catch(() => {});
   }, [session]);
 
@@ -180,6 +185,45 @@ export default function Dashboard() {
           </h1>
           <p className="text-gray-500 text-sm md:text-base">We track {coins.length} Solana memecoins and tell you what to do. No trading experience needed.</p>
         </div>
+
+        {/* My Holdings */}
+        {holdings.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-bold text-white mb-3">My Holdings</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {holdings.map(h => {
+                const coin = coins.find(c => c.coin_id === h.coin_id);
+                const currentPrice = coin?.metric?.price ?? 0;
+                const coinsHeld = h.amount_invested / h.buy_price;
+                const currentValue = coinsHeld * currentPrice;
+                const pnl = currentValue - h.amount_invested;
+                const pnlPct = ((pnl / h.amount_invested) * 100).toFixed(1);
+                const isUp = pnl >= 0;
+                const signal = coin?.score?.signal || 'Unknown';
+                return (
+                  <button key={h.coin_id} onClick={() => router.push(`/coin/${h.coin_id}`)} className="cursor-pointer text-left bg-white/3 border border-white/8 rounded-2xl p-4 hover:bg-white/5 transition-all">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-white font-bold text-sm">{coin?.symbol || h.coin_id}</span>
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${signal === 'Buy Now' ? 'bg-emerald-500/15 text-emerald-400' : signal === 'Likely Rug' || signal === 'Avoid' ? 'bg-red-500/15 text-red-400' : 'bg-white/5 text-gray-400'}`}>{signal}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <div className="text-gray-500 mb-0.5">Invested</div>
+                        <div className="text-white font-medium">${h.amount_invested}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500 mb-0.5">P&L</div>
+                        <div className={`font-bold ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {isUp ? '+' : ''}${pnl.toFixed(2)} ({isUp ? '+' : ''}{pnlPct}%)
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Stats row — 2 cols on mobile, 4 on desktop */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">

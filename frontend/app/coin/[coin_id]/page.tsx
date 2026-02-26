@@ -118,10 +118,14 @@ function formatAge(launch_time: string) {
 export default function CoinPage() {
   const params = useParams();
   const router = useRouter();
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const [coin, setCoin] = useState<CoinDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [holding, setHolding] = useState<{ amount_invested: number; buy_price: number } | null>(null);
+  const [showBuyForm, setShowBuyForm] = useState(false);
+  const [amountInput, setAmountInput] = useState('');
+  const [holdingStatus, setHoldingStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     if (status === 'unauthenticated') router.replace('/sign-in');
@@ -141,6 +145,51 @@ export default function CoinPage() {
     }
     fetchCoin();
   }, [params.coin_id]);
+
+  useEffect(() => {
+    const google_id = (session?.user as { google_id?: string })?.google_id;
+    if (!google_id || !params.coin_id) return;
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/holdings/${google_id}`)
+      .then(r => r.json())
+      .then(data => {
+        const h = (data.data || []).find((x: { coin_id: string }) => x.coin_id === params.coin_id);
+        if (h) setHolding(h);
+      })
+      .catch(() => {});
+  }, [session, params.coin_id]);
+
+  async function saveHolding() {
+    const google_id = (session?.user as { google_id?: string })?.google_id;
+    const currentPrice = coin?.metrics?.[0]?.price;
+    if (!google_id || !amountInput || !currentPrice) return;
+    setHoldingStatus('loading');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/holdings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ google_id, coin_id: params.coin_id, amount_invested: parseFloat(amountInput), buy_price: currentPrice }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setHolding({ amount_invested: parseFloat(amountInput), buy_price: currentPrice });
+        setHoldingStatus('success');
+        setShowBuyForm(false);
+      } else {
+        setHoldingStatus('error');
+      }
+    } catch {
+      setHoldingStatus('error');
+    }
+  }
+
+  async function removeHolding() {
+    const google_id = (session?.user as { google_id?: string })?.google_id;
+    if (!google_id) return;
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/holdings/${google_id}/${params.coin_id}`, { method: 'DELETE' });
+    setHolding(null);
+    setShowBuyForm(false);
+    setAmountInput('');
+  }
 
   function copyAddress() {
     if (!coin?.contract_address) return;
@@ -304,6 +353,76 @@ export default function CoinPage() {
                 <div className="flex items-center justify-center gap-2 bg-white/4 border border-white/6 text-gray-600 font-semibold py-3.5 px-5 rounded-2xl text-sm w-full cursor-not-allowed">
                   {signal === 'Too Late' ? 'Already pumped. Not recommended to buy' : 'Not recommended to buy'}
                 </div>
+              )}
+            </div>
+
+            {/* I Bought This */}
+            <div className="mb-5">
+              {holding ? (
+                <div className="bg-white/3 border border-white/8 rounded-2xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-white text-sm font-semibold">My Position</span>
+                    <button onClick={removeHolding} className="cursor-pointer text-xs text-gray-600 hover:text-red-400 transition-colors">I Sold</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-gray-500 text-xs mb-1">Invested</div>
+                      <div className="text-white font-bold">${holding.amount_invested}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500 text-xs mb-1">Current Value</div>
+                      {(() => {
+                        const currentPrice = coin?.metrics?.[0]?.price ?? 0;
+                        const coinsHeld = holding.amount_invested / holding.buy_price;
+                        const currentValue = coinsHeld * currentPrice;
+                        const pnl = currentValue - holding.amount_invested;
+                        const pnlPct = ((pnl / holding.amount_invested) * 100).toFixed(1);
+                        const isUp = pnl >= 0;
+                        return (
+                          <div>
+                            <div className="text-white font-bold">${currentValue.toFixed(2)}</div>
+                            <div className={`text-xs font-medium ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
+                              {isUp ? '+' : ''}{pnl.toFixed(2)} ({isUp ? '+' : ''}{pnlPct}%)
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              ) : showBuyForm ? (
+                <div className="bg-white/3 border border-white/8 rounded-2xl p-4">
+                  <div className="text-white text-sm font-semibold mb-3">How much did you invest?</div>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                      <input
+                        type="number"
+                        value={amountInput}
+                        onChange={e => setAmountInput(e.target.value)}
+                        placeholder="50"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-7 pr-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-white/20"
+                      />
+                    </div>
+                    <button
+                      onClick={saveHolding}
+                      disabled={holdingStatus === 'loading' || !amountInput}
+                      className="cursor-pointer px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 text-white text-sm font-medium transition-all"
+                    >
+                      {holdingStatus === 'loading' ? '...' : 'Save'}
+                    </button>
+                    <button onClick={() => setShowBuyForm(false)} className="cursor-pointer px-3 py-2 rounded-xl bg-white/5 text-gray-400 hover:text-white text-sm transition-all">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowBuyForm(true)}
+                  className="cursor-pointer w-full flex items-center justify-center gap-2 border border-white/10 text-gray-400 hover:text-white hover:border-white/20 font-medium py-3 px-5 rounded-2xl transition-all text-sm"
+                >
+                  I Bought This
+                </button>
               )}
             </div>
 
