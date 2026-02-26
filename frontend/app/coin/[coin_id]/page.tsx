@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 
@@ -117,9 +118,14 @@ function formatAge(launch_time: string) {
 export default function CoinPage() {
   const params = useParams();
   const router = useRouter();
+  const { status } = useSession();
   const [coin, setCoin] = useState<CoinDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') router.replace('/sign-in');
+  }, [status, router]);
 
   useEffect(() => {
     async function fetchCoin() {
@@ -161,7 +167,7 @@ export default function CoinPage() {
           Dashboard
         </a>
 
-        {loading ? (
+        {loading || status === 'loading' || status === 'unauthenticated' ? (
           <div className="text-center text-gray-600 py-24 text-sm">Loading...</div>
         ) : !coin ? (
           <div className="text-center py-24">
