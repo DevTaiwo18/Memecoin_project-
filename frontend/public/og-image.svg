@@ -1,0 +1,42 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#080810"/>
+  <rect width="1200" height="630" fill="url(#bg_grad)" opacity="0.4"/>
+
+  <defs>
+    <linearGradient id="bg_grad" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#2563EB" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="logo_grad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Logo icon -->
+  <rect x="80" y="80" width="80" height="80" rx="20" fill="url(#logo_grad)"/>
+  <path d="M120 146 A32 32 0 0 1 88 114" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.4" fill="none"/>
+  <path d="M120 146 A20 20 0 0 1 100 126" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.65" fill="none"/>
+  <path d="M120 146 A10 10 0 0 1 110 136" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.9" fill="none"/>
+  <line x1="120" y1="146" x2="144" y2="98" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="120" cy="146" r="6" fill="white"/>
+  <circle cx="144" cy="98" r="5" fill="#67E8F9"/>
+
+  <!-- PumpRadar text -->
+  <text x="180" y="135" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="700" fill="white">PumpRadar</text>
+
+  <!-- Tagline -->
+  <text x="80" y="300" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="700" fill="white">Know when to buy</text>
+  <text x="80" y="370" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="700" fill="#06B6D4">before the pump.</text>
+
+  <!-- Description -->
+  <text x="80" y="440" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#6B7280">Real-time Solana memecoin signals. No trading experience needed.</text>
+
+  <!-- Badge -->
+  <rect x="80" y="500" width="220" height="46" rx="23" fill="#06B6D4" fill-opacity="0.15" stroke="#06B6D4" stroke-opacity="0.3" stroke-width="1"/>
+  <circle cx="110" cy="523" r="6" fill="#06B6D4"/>
+  <text x="126" y="529" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#06B6D4" font-weight="600">Live Solana tracking</text>
+
+  <!-- URL -->
+  <text x="1120" y="580" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#374151" text-anchor="end">pumparadar.vercel.app</text>
+</svg>

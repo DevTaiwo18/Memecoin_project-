@@ -14,8 +14,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PumpRadar",
-  description: "Know when to buy Solana memecoins before the pump",
+  title: "PumpRadar — Know when to buy before the pump",
+  description: "We track Solana memecoins in real time and tell you exactly when to get in, before the price explodes. No trading experience needed.",
+  metadataBase: new URL("https://pumparadar.vercel.app"),
+  openGraph: {
+    title: "PumpRadar — Know when to buy before the pump",
+    description: "We track Solana memecoins in real time and tell you exactly when to get in, before the price explodes. No trading experience needed.",
+    url: "https://pumparadar.vercel.app",
+    siteName: "PumpRadar",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "PumpRadar — Know when to buy before the pump",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PumpRadar — Know when to buy before the pump",
+    description: "We track Solana memecoins in real time and tell you exactly when to get in, before the price explodes.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
