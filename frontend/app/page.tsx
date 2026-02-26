@@ -2,184 +2,163 @@
 
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
 import Logo from '@/components/Logo';
 
 export default function LandingPage() {
   const { data: session } = useSession();
-  const [stats, setStats] = useState<{ total: number; buyNow: number; watching: number } | null>(null);
-
-  useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/coins`)
-      .then(r => r.json())
-      .then(data => {
-        const coins = data.data || [];
-        setStats({
-          total: coins.length,
-          buyNow: coins.filter((c: { score?: { signal?: string } }) => c.score?.signal === 'Buy Now').length,
-          watching: coins.filter((c: { score?: { signal?: string } }) => c.score?.signal === 'Keep Watching').length,
-        });
-      })
-      .catch(() => {});
-  }, []);
 
   return (
     <div className="min-h-screen bg-[#080810] text-white flex flex-col">
 
       {/* Nav */}
-      <div className="border-b border-white/5 px-4 md:px-10 py-4 flex items-center justify-between">
+      <nav className="px-6 md:px-12 py-5 flex items-center justify-between border-b border-white/5">
         <div className="flex items-center gap-3">
           <Logo size={28} />
-          <span className="font-bold text-white tracking-tight text-sm md:text-base">PumpRadar</span>
+          <span className="font-bold text-white tracking-tight">PumpRadar</span>
         </div>
-        <div className="flex items-center gap-3">
-          {session ? (
-            <Link href="/dashboard" className="cursor-pointer text-xs font-semibold px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white transition-all">
-              Dashboard
-            </Link>
-          ) : (
-            <Link href="/sign-in" className="cursor-pointer text-xs font-semibold px-4 py-2 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-white transition-all">
-              Sign In
-            </Link>
-          )}
-        </div>
-      </div>
-
-      {/* Hero */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 text-center py-20 md:py-28">
-
-        <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-4 py-1.5 text-xs text-cyan-400 font-medium mb-6">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
-          Live Solana memecoin tracking
-        </div>
-
-        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-5 leading-tight max-w-3xl">
-          Know when to buy <span className="text-cyan-400">before</span> the pump
-        </h1>
-
-        <p className="text-gray-400 text-base md:text-lg max-w-xl mb-10 leading-relaxed">
-          We track Solana memecoins in real time and tell you exactly when to get in, before the price explodes.
-          No trading experience needed.
-        </p>
-
         {session ? (
-          <Link href="/dashboard" className="cursor-pointer flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-3 px-8 rounded-2xl transition-all text-sm">
-            See live signals
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
+          <Link href="/dashboard" className="text-xs font-semibold px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white transition-all">
+            Dashboard
           </Link>
         ) : (
-          <Link href="/sign-in" className="cursor-pointer flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-3 px-8 rounded-2xl transition-all text-sm">
-            Get Started — it&apos;s free
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
+          <Link href="/sign-in" className="text-xs font-semibold px-4 py-2 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-white transition-all">
+            Sign In
           </Link>
         )}
+      </nav>
 
-        {/* Live stats */}
-        {stats && (
-          <div className="flex items-center gap-6 mt-10 flex-wrap justify-center">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-white">{stats.total}</div>
-              <div className="text-xs text-gray-500 mt-0.5">Coins tracked</div>
-            </div>
-            <div className="w-px h-8 bg-white/10" />
-            <div className="text-center">
-              <div className="text-2xl font-bold text-emerald-400">{stats.buyNow}</div>
-              <div className="text-xs text-gray-500 mt-0.5">Buy windows open</div>
-            </div>
-            <div className="w-px h-8 bg-white/10" />
-            <div className="text-center">
-              <div className="text-2xl font-bold text-sky-400">{stats.watching}</div>
-              <div className="text-xs text-gray-500 mt-0.5">Worth watching</div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* How it works */}
-      <div className="px-4 md:px-10 pb-16 md:pb-20">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-center text-xl font-bold text-white mb-8">How it works</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white/3 border border-white/6 rounded-2xl p-6">
-              <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 text-xs font-bold flex items-center justify-center mb-4">1</div>
-              <h3 className="font-semibold text-white text-sm mb-2">We watch the market 24/7</h3>
-              <p className="text-gray-500 text-xs leading-relaxed">PumpRadar tracks 100+ Solana memecoins every 5 minutes — price, volume, liquidity, and transactions.</p>
-            </div>
-            <div className="bg-white/3 border border-white/6 rounded-2xl p-6">
-              <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 text-xs font-bold flex items-center justify-center mb-4">2</div>
-              <h3 className="font-semibold text-white text-sm mb-2">Our engine scores every coin</h3>
-              <p className="text-gray-500 text-xs leading-relaxed">Safety score checks for rugs. Momentum score detects coins gaining traction on 5m and 1h before the 24h pump.</p>
-            </div>
-            <div className="bg-white/3 border border-white/6 rounded-2xl p-6">
-              <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 text-xs font-bold flex items-center justify-center mb-4">3</div>
-              <h3 className="font-semibold text-white text-sm mb-2">You get the signal instantly</h3>
-              <p className="text-gray-500 text-xs leading-relaxed">When a coin hits Buy Now, you get a Telegram alert. Track your holding and get take profit alerts at +10%, +20%, +50% and beyond.</p>
-            </div>
-          </div>
+      {/* Hero */}
+      <section className="flex-1 flex flex-col items-center justify-center text-center px-6 py-24 md:py-32">
+        <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-4 py-1.5 text-xs text-cyan-400 font-medium mb-8">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+          Live on Solana
         </div>
-      </div>
 
-      {/* Features */}
-      <div className="px-4 md:px-10 pb-16 md:pb-20">
-        <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight leading-tight max-w-4xl mb-6">
+          Know when to buy{' '}
+          <span className="text-cyan-400">before</span>{' '}
+          the pump
+        </h1>
 
-          <div className="bg-white/3 border border-white/6 rounded-2xl p-6">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/15 flex items-center justify-center mb-4">
+        <p className="text-gray-400 text-lg md:text-xl max-w-2xl mb-10 leading-relaxed">
+          PumpRadar tracks Solana memecoins in real time, scores them for momentum and safety, and tells you exactly when to get in, before the price explodes.
+        </p>
+
+        <div className="flex items-center gap-4 flex-wrap justify-center">
+          {session ? (
+            <Link href="/dashboard" className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-3.5 px-8 rounded-2xl transition-all">
+              See live signals
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </Link>
+          ) : (
+            <>
+              <Link href="/sign-in" className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-3.5 px-8 rounded-2xl transition-all">
+                Get started free
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Link>
+              <Link href="/sign-in" className="text-sm text-gray-400 hover:text-white transition-all">
+                Sign in with Google →
+              </Link>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Feature highlights */}
+      <section className="px-6 md:px-12 pb-20">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-px bg-white/5 rounded-2xl overflow-hidden border border-white/5">
+          <div className="bg-[#080810] px-8 py-8 flex gap-4 items-start">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/15 flex items-center justify-center shrink-0">
               <svg className="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
             </div>
-            <h3 className="font-semibold text-white text-sm mb-1">Buy Now signals</h3>
-            <p className="text-gray-500 text-xs leading-relaxed">We detect coins gaining momentum on 5m and 1h but not yet pumped on 24h. That&apos;s your window.</p>
+            <div>
+              <h3 className="font-semibold text-white mb-1">Buy Now signals</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">Coins gaining on 5m and 1h but not yet pumped on 24h. That&apos;s your entry window.</p>
+            </div>
           </div>
-
-          <div className="bg-white/3 border border-white/6 rounded-2xl p-6">
-            <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center mb-4">
+          <div className="bg-[#080810] px-8 py-8 flex gap-4 items-start">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
               <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
-            <h3 className="font-semibold text-white text-sm mb-1">Rug protection</h3>
-            <p className="text-gray-500 text-xs leading-relaxed">Every coin gets a safety score based on liquidity depth and buy/sell ratio so you can spot and avoid rugs.</p>
+            <div>
+              <h3 className="font-semibold text-white mb-1">Rug protection</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">Every coin gets a safety score based on liquidity and buy/sell ratio. Avoid scams before they happen.</p>
+            </div>
           </div>
-
-          <div className="bg-white/3 border border-white/6 rounded-2xl p-6">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/15 flex items-center justify-center mb-4">
-              <svg className="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="bg-[#080810] px-8 py-8 flex gap-4 items-start">
+            <div className="w-10 h-10 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
             </div>
-            <h3 className="font-semibold text-white text-sm mb-1">Telegram alerts</h3>
-            <p className="text-gray-500 text-xs leading-relaxed">Buy Now, take profit at every milestone, and sell alerts when a coin turns bad — all instant on Telegram.</p>
+            <div>
+              <h3 className="font-semibold text-white mb-1">Telegram alerts</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">Buy Now, take profit at +10% to +200%, and sell alerts, all instant on Telegram.</p>
+            </div>
           </div>
-
         </div>
-      </div>
+      </section>
 
-      {/* Bottom CTA */}
+      {/* How it works */}
+      <section className="px-6 md:px-12 pb-24">
+        <div className="max-w-3xl mx-auto">
+          <p className="text-center text-xs font-semibold text-cyan-400 uppercase tracking-widest mb-4">How it works</p>
+          <h2 className="text-center text-2xl md:text-3xl font-bold text-white mb-16">Three steps. No experience needed.</h2>
+
+          <div className="flex flex-col gap-12">
+            <div className="flex gap-6 items-start">
+              <div className="w-10 h-10 rounded-full bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 font-bold text-sm flex items-center justify-center shrink-0">1</div>
+              <div>
+                <h3 className="font-semibold text-white text-lg mb-2">We scan the market every 5 minutes</h3>
+                <p className="text-gray-500 leading-relaxed">PumpRadar pulls live data on 100+ Solana memecoins, price, volume, liquidity, and transaction counts, around the clock.</p>
+              </div>
+            </div>
+            <div className="flex gap-6 items-start">
+              <div className="w-10 h-10 rounded-full bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 font-bold text-sm flex items-center justify-center shrink-0">2</div>
+              <div>
+                <h3 className="font-semibold text-white text-lg mb-2">Our engine scores every coin</h3>
+                <p className="text-gray-500 leading-relaxed">A safety score flags potential rugs. A momentum score identifies coins heating up on the 5m and 1h timeframes, before the 24h chart shows anything.</p>
+              </div>
+            </div>
+            <div className="flex gap-6 items-start">
+              <div className="w-10 h-10 rounded-full bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 font-bold text-sm flex items-center justify-center shrink-0">3</div>
+              <div>
+                <h3 className="font-semibold text-white text-lg mb-2">You get the signal on Telegram</h3>
+                <p className="text-gray-500 leading-relaxed">The moment a coin hits Buy Now, you get an alert. Track your holding and receive take profit alerts at every milestone, and a sell alert if the signal turns bad.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA banner */}
       {!session && (
-        <div className="px-4 md:px-10 pb-20">
-          <div className="max-w-2xl mx-auto bg-cyan-500/5 border border-cyan-500/20 rounded-3xl p-8 md:p-10 text-center">
-            <h2 className="text-xl md:text-2xl font-bold text-white mb-3">Start catching pumps today</h2>
-            <p className="text-gray-400 text-sm mb-6">Free to use. Sign in with Google, connect Telegram, and let PumpRadar do the work.</p>
-            <Link href="/sign-in" className="cursor-pointer inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-3 px-8 rounded-2xl transition-all text-sm">
-              Get Started — it&apos;s free
+        <section className="px-6 md:px-12 pb-24">
+          <div className="max-w-4xl mx-auto bg-linear-to-br from-cyan-500/10 to-blue-500/5 border border-cyan-500/20 rounded-3xl p-10 md:p-16 text-center">
+            <h2 className="text-2xl md:text-4xl font-bold text-white mb-4">Start catching pumps today</h2>
+            <p className="text-gray-400 text-lg mb-8 max-w-xl mx-auto">Free to use. Sign in with Google, connect Telegram, and let PumpRadar do the work.</p>
+            <Link href="/sign-in" className="inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-4 px-10 rounded-2xl transition-all text-base">
+              Get started, it&apos;s free
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </Link>
           </div>
-        </div>
+        </section>
       )}
 
       {/* Footer */}
-      <div className="border-t border-white/5 px-4 py-5 text-center text-xs text-gray-700">
+      <footer className="border-t border-white/5 px-6 py-6 text-center text-xs text-gray-700">
         Not financial advice. Memecoins are high-risk. Only invest what you can afford to lose.
-      </div>
+      </footer>
 
     </div>
   );
