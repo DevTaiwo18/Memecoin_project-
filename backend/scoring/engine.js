@@ -117,6 +117,8 @@ async function runScoringEngine() {
 
       if (signal === 'Buy Now' && wasNotBuyNow && usersWithTelegram.length > 0) {
         for (const user of usersWithTelegram) {
+          const alreadyHolding = user.holdings && user.holdings.some(h => h.coin_id === coin_id);
+          if (alreadyHolding) continue;
           sendBuyNowAlert(user.telegram_chat_id, coinData).catch(err =>
             console.error(`[Telegram] Failed to alert ${user.telegram_chat_id}:`, err.message)
           );
