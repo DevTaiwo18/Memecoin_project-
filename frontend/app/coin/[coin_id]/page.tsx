@@ -160,12 +160,12 @@ export default function CoinPage() {
 
       <div className="max-w-350 mx-auto px-4 md:px-8 py-6 md:py-8">
 
-        <a href="/dashboard" className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors mb-5">
+        <button onClick={() => router.push('/dashboard')} className="cursor-pointer inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors mb-5">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
           Dashboard
-        </a>
+        </button>
 
         {loading || status === 'loading' || status === 'unauthenticated' ? (
           <div className="text-center text-gray-600 py-24 text-sm">Loading...</div>
