@@ -127,11 +127,10 @@ async function runScoringEngine() {
       if (isSellSignal) {
         const usersHolding = await User.find({
           telegram_chat_id: { $ne: null },
-          'holdings.coin_id': coin_id,
-          'holdings.sell_alerted': false,
+          holdings: { $elemMatch: { coin_id, sell_alerted: false } },
         });
         for (const user of usersHolding) {
-          const holding = user.holdings.find(h => h.coin_id === coin_id);
+          const holding = user.holdings.find(h => h.coin_id === coin_id && !h.sell_alerted);
           if (!holding) continue;
           const coinsHeld = holding.amount_invested / holding.buy_price;
           const currentValue = coinsHeld * metric.price;
@@ -141,6 +140,7 @@ async function runScoringEngine() {
             console.error(`[Telegram] Failed to send sell alert ${user.telegram_chat_id}:`, err.message)
           );
           holding.sell_alerted = true;
+          user.markModified('holdings');
         }
         await Promise.all(usersHolding.map(u => u.save()));
       }

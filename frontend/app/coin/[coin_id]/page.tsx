@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
-import Navbar from '@/components/Navbar';
+import Sidebar from '@/components/Sidebar';
 
 interface Metric {
   price: number;
@@ -122,7 +122,7 @@ export default function CoinPage() {
   const [coin, setCoin] = useState<CoinDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [holding, setHolding] = useState<{ amount_invested: number; buy_price: number } | null>(null);
+  const [isHolding, setIsHolding] = useState(false);
   const [showBuyForm, setShowBuyForm] = useState(false);
   const [amountInput, setAmountInput] = useState('');
   const [holdingStatus, setHoldingStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -148,12 +148,13 @@ export default function CoinPage() {
 
   useEffect(() => {
     const google_id = (session?.user as { google_id?: string })?.google_id;
-    if (!google_id || !params.coin_id) return;
+    if (!google_id) return;
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/holdings/${google_id}`)
       .then(r => r.json())
       .then(data => {
-        const h = (data.data || []).find((x: { coin_id: string }) => x.coin_id === params.coin_id);
-        if (h) setHolding(h);
+        if (data.success) {
+          setIsHolding(data.data.some((h: { coin_id: string }) => h.coin_id === params.coin_id));
+        }
       })
       .catch(() => {});
   }, [session, params.coin_id]);
@@ -171,24 +172,13 @@ export default function CoinPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setHolding({ amount_invested: parseFloat(amountInput), buy_price: currentPrice });
-        setHoldingStatus('success');
-        setShowBuyForm(false);
+        router.push('/holdings');
       } else {
         setHoldingStatus('error');
       }
     } catch {
       setHoldingStatus('error');
     }
-  }
-
-  async function removeHolding() {
-    const google_id = (session?.user as { google_id?: string })?.google_id;
-    if (!google_id) return;
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/holdings/${google_id}/${params.coin_id}`, { method: 'DELETE' });
-    setHolding(null);
-    setShowBuyForm(false);
-    setAmountInput('');
   }
 
   function copyAddress() {
@@ -203,11 +193,10 @@ export default function CoinPage() {
   const isBuyNow = signal === 'Buy Now';
 
   return (
-    <div className="min-h-screen bg-[#080810] text-white">
+    <div className="flex min-h-screen bg-[#080810] text-white">
+      <Sidebar />
 
-      <Navbar />
-
-      <div className="max-w-350 mx-auto px-4 md:px-8 py-6 md:py-8">
+      <main className="flex-1 min-w-0 px-4 md:px-8 py-6 md:py-8 pt-20 md:pt-6">
 
         <button onClick={() => router.push('/dashboard')} className="cursor-pointer inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors mb-5">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -250,7 +239,12 @@ export default function CoinPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
-                  {signal && <SignalBadge signal={signal} />}
+                  {isHolding ? (
+                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl border bg-cyan-500/10 text-cyan-400 border-cyan-500/30">
+                      <span className="w-2 h-2 rounded-full shrink-0 bg-cyan-500" />
+                      Holding
+                    </span>
+                  ) : signal && <SignalBadge signal={signal} />}
                   <div className="text-right">
                     <div className="text-xl md:text-2xl font-bold text-white">{formatPrice(metric?.price ?? 0)}</div>
                     <div className="text-xs text-gray-500">Current price</div>
@@ -336,7 +330,7 @@ export default function CoinPage() {
             </div>
 
             {/* Buy button */}
-            <div className="mb-5">
+            {!isHolding && <div className="mb-5">
               {signal === 'Buy Now' || signal === 'Keep Watching' ? (
                 <a
                   href={`https://photon-sol.tinyastro.io/en/lp/${coin.contract_address}`}
@@ -354,45 +348,21 @@ export default function CoinPage() {
                   {signal === 'Too Late' ? 'Already pumped. Not recommended to buy' : 'Not recommended to buy'}
                 </div>
               )}
-            </div>
+            </div>}
 
-            {/* I Bought This */}
+            {/* Track as Holding */}
             <div className="mb-5">
-              {holding ? (
-                <div className="bg-white/3 border border-white/8 rounded-2xl p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-white text-sm font-semibold">My Position</span>
-                    <button onClick={removeHolding} className="cursor-pointer text-xs text-gray-600 hover:text-red-400 transition-colors">I Sold</button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <div className="text-gray-500 text-xs mb-1">Invested</div>
-                      <div className="text-white font-bold">${holding.amount_invested}</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500 text-xs mb-1">Current Value</div>
-                      {(() => {
-                        const currentPrice = coin?.metrics?.[0]?.price ?? 0;
-                        const coinsHeld = holding.amount_invested / holding.buy_price;
-                        const currentValue = coinsHeld * currentPrice;
-                        const pnl = currentValue - holding.amount_invested;
-                        const pnlPct = ((pnl / holding.amount_invested) * 100).toFixed(1);
-                        const isUp = pnl >= 0;
-                        return (
-                          <div>
-                            <div className="text-white font-bold">${currentValue.toFixed(2)}</div>
-                            <div className={`text-xs font-medium ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
-                              {isUp ? '+' : ''}{pnl.toFixed(2)} ({isUp ? '+' : ''}{pnlPct}%)
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                </div>
+              {isHolding ? (
+                <button
+                  onClick={() => router.push('/holdings')}
+                  className="cursor-pointer w-full flex items-center justify-center gap-2 border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 font-semibold py-3 px-5 rounded-2xl transition-all text-sm hover:bg-cyan-500/20"
+                >
+                  <span className="w-2 h-2 rounded-full bg-cyan-500 shrink-0" />
+                  Holding — View in My Holdings
+                </button>
               ) : showBuyForm ? (
                 <div className="bg-white/3 border border-white/8 rounded-2xl p-4">
-                  <div className="text-white text-sm font-semibold mb-3">How much did you invest?</div>
+                  <div className="text-white text-sm font-semibold mb-3">How much did you invest in this holding?</div>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
@@ -421,7 +391,7 @@ export default function CoinPage() {
                   onClick={() => setShowBuyForm(true)}
                   className="cursor-pointer w-full flex items-center justify-center gap-2 border border-white/10 text-gray-400 hover:text-white hover:border-white/20 font-medium py-3 px-5 rounded-2xl transition-all text-sm"
                 >
-                  I Bought This
+                  Track as Holding
                 </button>
               )}
             </div>
@@ -474,7 +444,7 @@ export default function CoinPage() {
             )}
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }

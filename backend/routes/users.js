@@ -25,17 +25,6 @@ router.post('/sync', async (req, res) => {
   }
 });
 
-// Get user by google_id
-router.get('/:google_id', async (req, res) => {
-  try {
-    const user = await User.findOne({ google_id: req.params.google_id }).lean();
-    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
-    res.json({ success: true, data: user });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
 // Connect Telegram — user sends their chat_id after starting the bot
 router.post('/connect-telegram', async (req, res) => {
   try {
@@ -106,6 +95,17 @@ router.get('/holdings/:google_id', async (req, res) => {
     const user = await User.findOne({ google_id: req.params.google_id }).lean();
     if (!user) return res.status(404).json({ success: false, error: 'User not found' });
     res.json({ success: true, data: user.holdings });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Get user by google_id — must be last to avoid matching /holdings/:id
+router.get('/:google_id', async (req, res) => {
+  try {
+    const user = await User.findOne({ google_id: req.params.google_id }).lean();
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    res.json({ success: true, data: user });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import Navbar from '@/components/Navbar';
+import Sidebar from '@/components/Sidebar';
 
 export default function AccountPage() {
   const { data: session, status } = useSession();
@@ -57,10 +57,11 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080810] text-white">
-      <Navbar />
+    <div className="flex min-h-screen bg-[#080810] text-white">
+      <Sidebar />
 
-      <div className="max-w-xl mx-auto px-4 md:px-8 py-10">
+      <main className="flex-1 min-w-0 py-10 pt-20 md:pt-10">
+        <div className="max-w-2xl mx-auto px-4 md:px-8">
 
         <div className="flex items-center gap-3 mb-6">
           <button onClick={() => router.push('/dashboard')} className="cursor-pointer text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-1.5 text-xs">
@@ -146,7 +147,8 @@ export default function AccountPage() {
         >
           Sign out
         </button>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

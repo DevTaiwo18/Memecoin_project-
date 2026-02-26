@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
-import Navbar from '@/components/Navbar';
+import Sidebar from '@/components/Sidebar';
 
 
 interface Metric {
@@ -93,7 +93,7 @@ export default function Dashboard() {
   const [coins, setCoins] = useState<Coin[]>([]);
   const [loading, setLoading] = useState(true);
   const [telegramConnected, setTelegramConnected] = useState(true);
-  const [holdings, setHoldings] = useState<{ coin_id: string; amount_invested: number; buy_price: number }[]>([]);
+  const [heldCoinIds, setHeldCoinIds] = useState<Set<string>>(new Set());
 
   const [sortBy, setSortBy] = useState<'composite' | 'momentum' | 'safety'>('composite');
   const [activeFilter, setActiveFilter] = useState<'all' | 'Buy Now' | 'Keep Watching' | 'Likely Rug' | 'Danger'>('all');
@@ -112,7 +112,7 @@ export default function Dashboard() {
       .catch(() => {});
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/holdings/${google_id}`)
       .then(r => r.json())
-      .then(data => { if (data.success) setHoldings(data.data || []); })
+      .then(data => { if (data.success) setHeldCoinIds(new Set((data.data || []).map((h: { coin_id: string }) => h.coin_id))); })
       .catch(() => {});
   }, [session]);
 
@@ -145,7 +145,17 @@ export default function Dashboard() {
       return c.symbol?.toLowerCase().includes(q) || c.name?.toLowerCase().includes(q);
     });
 
+  const SIGNAL_RANK: Record<string, number> = { 'Buy Now': 1, 'Keep Watching': 2, 'Too Late': 3, 'Avoid': 4, 'Likely Rug': 5 };
+
   const sorted = [...filtered].sort((a, b) => {
+    const aHeld = heldCoinIds.has(a.coin_id) ? 0 : 1;
+    const bHeld = heldCoinIds.has(b.coin_id) ? 0 : 1;
+    if (aHeld !== bHeld) return aHeld - bHeld;
+
+    const aSig = SIGNAL_RANK[a.score?.signal] ?? 6;
+    const bSig = SIGNAL_RANK[b.score?.signal] ?? 6;
+    if (aSig !== bSig) return aSig - bSig;
+
     const key = sortBy === 'composite' ? 'composite_score' : sortBy === 'momentum' ? 'momentum_score' : 'safety_score';
     return (b.score?.[key] ?? 0) - (a.score?.[key] ?? 0);
   });
@@ -159,11 +169,12 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080810] text-white">
+    <div className="min-h-screen bg-[#080810] text-white flex">
 
-      <Navbar />
+      <Sidebar />
 
-      <div className="max-w-350 mx-auto px-4 md:px-8 py-6 md:py-8">
+      <main className="flex-1 min-w-0 pt-14 md:pt-0">
+      <div className="px-4 md:px-8 py-6 md:py-8">
 
         {/* Telegram banner */}
         {!telegramConnected && (
@@ -185,45 +196,6 @@ export default function Dashboard() {
           </h1>
           <p className="text-gray-500 text-sm md:text-base">We track {coins.length} Solana memecoins and tell you what to do. No trading experience needed.</p>
         </div>
-
-        {/* My Holdings */}
-        {holdings.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-lg font-bold text-white mb-3">My Holdings</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {holdings.map(h => {
-                const coin = coins.find(c => c.coin_id === h.coin_id);
-                const currentPrice = coin?.metric?.price ?? 0;
-                const coinsHeld = h.amount_invested / h.buy_price;
-                const currentValue = coinsHeld * currentPrice;
-                const pnl = currentValue - h.amount_invested;
-                const pnlPct = ((pnl / h.amount_invested) * 100).toFixed(1);
-                const isUp = pnl >= 0;
-                const signal = coin?.score?.signal || 'Unknown';
-                return (
-                  <button key={h.coin_id} onClick={() => router.push(`/coin/${h.coin_id}`)} className="cursor-pointer text-left bg-white/3 border border-white/8 rounded-2xl p-4 hover:bg-white/5 transition-all">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-white font-bold text-sm">{coin?.symbol || h.coin_id}</span>
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${signal === 'Buy Now' ? 'bg-emerald-500/15 text-emerald-400' : signal === 'Likely Rug' || signal === 'Avoid' ? 'bg-red-500/15 text-red-400' : 'bg-white/5 text-gray-400'}`}>{signal}</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <div className="text-gray-500 mb-0.5">Invested</div>
-                        <div className="text-white font-medium">${h.amount_invested}</div>
-                      </div>
-                      <div>
-                        <div className="text-gray-500 mb-0.5">P&L</div>
-                        <div className={`font-bold ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {isUp ? '+' : ''}${pnl.toFixed(2)} ({isUp ? '+' : ''}{pnlPct}%)
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Stats row — 2 cols on mobile, 4 on desktop */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
@@ -353,7 +325,16 @@ export default function Dashboard() {
                         </td>
                         <td className="px-4 py-4"><ScoreBar value={coin.score?.safety_score} /></td>
                         <td className="px-4 py-4"><ScoreBar value={coin.score?.momentum_score} /></td>
-                        <td className="px-4 py-4 text-center"><SignalBadge signal={coin.score?.signal} /></td>
+                        <td className="px-4 py-4 text-center">
+                          {heldCoinIds.has(coin.coin_id) ? (
+                            <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl border bg-cyan-500/10 text-cyan-400 border-cyan-500/30">
+                              <span className="w-2 h-2 rounded-full shrink-0 bg-cyan-500" />
+                              Holding
+                            </span>
+                          ) : (
+                            <SignalBadge signal={coin.score?.signal} />
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
@@ -380,7 +361,14 @@ export default function Dashboard() {
                           <div className="text-gray-600 text-xs">{coin.name}</div>
                         </div>
                       </div>
-                      <SignalBadge signal={coin.score?.signal} />
+                      {heldCoinIds.has(coin.coin_id) ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border bg-cyan-500/10 text-cyan-400 border-cyan-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-cyan-500" />
+                          Holding
+                        </span>
+                      ) : (
+                        <SignalBadge signal={coin.score?.signal} />
+                      )}
                     </div>
                     <div className="grid grid-cols-3 gap-2 mb-3">
                       <div>
@@ -415,6 +403,7 @@ export default function Dashboard() {
           </>
         )}
       </div>
+      </main>
     </div>
   );
 }
