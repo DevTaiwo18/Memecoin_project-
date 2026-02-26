@@ -2,7 +2,7 @@ const Metric = require('../models/Metric');
 const Score = require('../models/Score');
 const Coin = require('../models/Coin');
 const User = require('../models/User');
-const { sendBuyNowAlert } = require('../telegram');
+const { sendBuyNowAlert, sendSellAlert } = require('../telegram');
 
 function calcSafetyScore(metric) {
   let score = 0;
@@ -104,21 +104,45 @@ async function runScoringEngine() {
 
       await Score.create({ coin_id, safety_score, momentum_score, composite_score, signal });
 
+      const coin = await Coin.findOne({ coin_id }).lean();
+      const coinData = {
+        coin_id,
+        symbol: coin?.symbol || coin_id,
+        name: coin?.name || coin_id,
+        price: metric.price < 0.0001 ? metric.price.toExponential(2) : `$${metric.price.toFixed(6)}`,
+        current_price: metric.price,
+        safety_score,
+        momentum_score,
+      };
+
       if (signal === 'Buy Now' && wasNotBuyNow && usersWithTelegram.length > 0) {
-        const coin = await Coin.findOne({ coin_id }).lean();
-        const coinData = {
-          coin_id,
-          symbol: coin?.symbol || coin_id,
-          name: coin?.name || coin_id,
-          price: metric.price < 0.0001 ? metric.price.toExponential(2) : `$${metric.price.toFixed(6)}`,
-          safety_score,
-          momentum_score,
-        };
         for (const user of usersWithTelegram) {
           sendBuyNowAlert(user.telegram_chat_id, coinData).catch(err =>
             console.error(`[Telegram] Failed to alert ${user.telegram_chat_id}:`, err.message)
           );
         }
+      }
+
+      const isSellSignal = ['Likely Rug', 'Avoid', 'Too Late'].includes(signal);
+      if (isSellSignal) {
+        const usersHolding = await User.find({
+          telegram_chat_id: { $ne: null },
+          'holdings.coin_id': coin_id,
+          'holdings.sell_alerted': false,
+        });
+        for (const user of usersHolding) {
+          const holding = user.holdings.find(h => h.coin_id === coin_id);
+          if (!holding) continue;
+          const coinsHeld = holding.amount_invested / holding.buy_price;
+          const currentValue = coinsHeld * metric.price;
+          const pnl = currentValue - holding.amount_invested;
+          const pnlPct = ((pnl / holding.amount_invested) * 100).toFixed(1);
+          sendSellAlert(user.telegram_chat_id, coinData, pnl, pnlPct).catch(err =>
+            console.error(`[Telegram] Failed to send sell alert ${user.telegram_chat_id}:`, err.message)
+          );
+          holding.sell_alerted = true;
+        }
+        await Promise.all(usersHolding.map(u => u.save()));
       }
     }
   } catch (err) {

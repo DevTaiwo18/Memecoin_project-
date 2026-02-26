@@ -60,4 +60,55 @@ router.post('/connect-telegram', async (req, res) => {
   }
 });
 
+// Add or update a holding
+router.post('/holdings', async (req, res) => {
+  try {
+    const { google_id, coin_id, amount_invested, buy_price } = req.body;
+    if (!google_id || !coin_id || !amount_invested || !buy_price) {
+      return res.status(400).json({ success: false, error: 'Missing required fields' });
+    }
+    const user = await User.findOne({ google_id });
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+    const existing = user.holdings.find(h => h.coin_id === coin_id);
+    if (existing) {
+      existing.amount_invested = amount_invested;
+      existing.buy_price = buy_price;
+      existing.sell_alerted = false;
+    } else {
+      user.holdings.push({ coin_id, amount_invested, buy_price });
+    }
+    await user.save();
+    res.json({ success: true, data: user.holdings });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Remove a holding (user sold)
+router.delete('/holdings/:google_id/:coin_id', async (req, res) => {
+  try {
+    const { google_id, coin_id } = req.params;
+    const user = await User.findOne({ google_id });
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+    user.holdings = user.holdings.filter(h => h.coin_id !== coin_id);
+    await user.save();
+    res.json({ success: true, data: user.holdings });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Get all holdings for a user
+router.get('/holdings/:google_id', async (req, res) => {
+  try {
+    const user = await User.findOne({ google_id: req.params.google_id }).lean();
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    res.json({ success: true, data: user.holdings });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;

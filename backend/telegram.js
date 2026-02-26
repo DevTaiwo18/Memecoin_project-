@@ -32,6 +32,19 @@ async function sendBuyNowAlert(chatId, coin) {
   return sendMessage(chatId, text);
 }
 
+async function sendSellAlert(chatId, coin, pnl, pnlPct) {
+  const pnlText = pnl >= 0 ? `+$${pnl.toFixed(2)} (+${pnlPct}%)` : `-$${Math.abs(pnl).toFixed(2)} (${pnlPct}%)`;
+  const emoji = pnl >= 0 ? '🟢' : '🔴';
+  const text =
+    `🚨 *Sell Alert: $${coin.symbol}*\n` +
+    `${coin.name}\n\n` +
+    `Signal is now *${coin.signal || 'Sell'}*. Consider taking profit.\n\n` +
+    `💰 Current Price: \`${coin.price}\`\n` +
+    `${emoji} P&L: *${pnlText}*\n\n` +
+    `👉 [View on PumpRadar](https://pumparadar.vercel.app/coin/${coin.coin_id})`;
+  return sendMessage(chatId, text);
+}
+
 function startPolling() {
   let offset = 0;
   setInterval(async () => {
@@ -90,4 +103,4 @@ async function setWebhook(url) {
   });
 }
 
-module.exports = { sendMessage, sendBuyNowAlert, setWebhook, startPolling };
+module.exports = { sendMessage, sendBuyNowAlert, sendSellAlert, setWebhook, startPolling };
