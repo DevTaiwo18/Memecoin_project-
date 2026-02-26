@@ -45,6 +45,17 @@ async function sendSellAlert(chatId, coin, pnl, pnlPct) {
   return sendMessage(chatId, text);
 }
 
+async function sendTakeProfitAlert(chatId, coin, pnl, pnlPct, milestone) {
+  const text =
+    `🤑 *Take Profit — $${coin.symbol}*\n` +
+    `${coin.name}\n\n` +
+    `Your holding is up *+${milestone}%* from your buy price!\n\n` +
+    `💰 Current Price: \`${coin.price}\`\n` +
+    `🟢 P&L: *+$${pnl.toFixed(2)} (+${pnlPct}%)*\n\n` +
+    `👉 [View on PumpRadar](https://pumparadar.vercel.app/coin/${coin.coin_id})`;
+  return sendMessage(chatId, text);
+}
+
 function startPolling() {
   let offset = 0;
   setInterval(async () => {
@@ -103,4 +114,4 @@ async function setWebhook(url) {
   });
 }
 
-module.exports = { sendMessage, sendBuyNowAlert, sendSellAlert, setWebhook, startPolling };
+module.exports = { sendMessage, sendBuyNowAlert, sendSellAlert, sendTakeProfitAlert, setWebhook, startPolling };

@@ -5,7 +5,8 @@ const HoldingSchema = new mongoose.Schema({
   amount_invested:  { type: Number, required: true },
   buy_price:        { type: Number, required: true },
   bought_at:        { type: Date, default: Date.now },
-  sell_alerted:     { type: Boolean, default: false },
+  sell_alerted:          { type: Boolean, default: false },
+  take_profit_alerted:   { type: Number, default: 0 },
 });
 
 const UserSchema = new mongoose.Schema({

@@ -2,7 +2,7 @@ const Metric = require('../models/Metric');
 const Score = require('../models/Score');
 const Coin = require('../models/Coin');
 const User = require('../models/User');
-const { sendBuyNowAlert, sendSellAlert } = require('../telegram');
+const { sendBuyNowAlert, sendSellAlert, sendTakeProfitAlert } = require('../telegram');
 
 function calcSafetyScore(metric) {
   let score = 0;
@@ -145,6 +145,29 @@ async function runScoringEngine() {
           user.markModified('holdings');
         }
         await Promise.all(usersHolding.map(u => u.save()));
+      }
+
+      // Take profit alerts
+      const TAKE_PROFIT_MILESTONES = [10, 20, 30, 50, 100, 200];
+      const usersHoldingForProfit = await User.find({
+        telegram_chat_id: { $ne: null },
+        holdings: { $elemMatch: { coin_id } },
+      });
+      for (const user of usersHoldingForProfit) {
+        const holding = user.holdings.find(h => h.coin_id === coin_id);
+        if (!holding) continue;
+        const pnlPct = ((metric.price - holding.buy_price) / holding.buy_price) * 100;
+        const milestone = [...TAKE_PROFIT_MILESTONES].reverse().find(m => pnlPct >= m);
+        if (!milestone) continue;
+        if ((holding.take_profit_alerted || 0) >= milestone) continue;
+        const coinsHeld = holding.amount_invested / holding.buy_price;
+        const pnl = (coinsHeld * metric.price) - holding.amount_invested;
+        sendTakeProfitAlert(user.telegram_chat_id, coinData, pnl, pnlPct.toFixed(1), milestone).catch(err =>
+          console.error(`[Telegram] Failed to send take profit alert ${user.telegram_chat_id}:`, err.message)
+        );
+        holding.take_profit_alerted = milestone;
+        user.markModified('holdings');
+        await user.save();
       }
     }
   } catch (err) {
