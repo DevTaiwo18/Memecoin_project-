@@ -2,10 +2,26 @@
 
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { useEffect, useState } from 'react';
 import Logo from '@/components/Logo';
 
 export default function LandingPage() {
   const { data: session } = useSession();
+  const [stats, setStats] = useState<{ total: number; buyNow: number; watching: number } | null>(null);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/coins`)
+      .then(r => r.json())
+      .then(data => {
+        const coins = data.data || [];
+        setStats({
+          total: coins.length,
+          buyNow: coins.filter((c: { score?: { signal?: string } }) => c.score?.signal === 'Buy Now').length,
+          watching: coins.filter((c: { score?: { signal?: string } }) => c.score?.signal === 'Keep Watching').length,
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#080810] text-white flex flex-col">
@@ -55,16 +71,60 @@ export default function LandingPage() {
           </Link>
         ) : (
           <Link href="/sign-in" className="cursor-pointer flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-3 px-8 rounded-2xl transition-all text-sm">
-            Get Started, it&apos;s free
+            Get Started — it&apos;s free
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
           </Link>
         )}
+
+        {/* Live stats */}
+        {stats && (
+          <div className="flex items-center gap-6 mt-10 flex-wrap justify-center">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-white">{stats.total}</div>
+              <div className="text-xs text-gray-500 mt-0.5">Coins tracked</div>
+            </div>
+            <div className="w-px h-8 bg-white/10" />
+            <div className="text-center">
+              <div className="text-2xl font-bold text-emerald-400">{stats.buyNow}</div>
+              <div className="text-xs text-gray-500 mt-0.5">Buy windows open</div>
+            </div>
+            <div className="w-px h-8 bg-white/10" />
+            <div className="text-center">
+              <div className="text-2xl font-bold text-sky-400">{stats.watching}</div>
+              <div className="text-xs text-gray-500 mt-0.5">Worth watching</div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* How it works */}
+      <div className="px-4 md:px-10 pb-16 md:pb-20">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-center text-xl font-bold text-white mb-8">How it works</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white/3 border border-white/6 rounded-2xl p-6">
+              <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 text-xs font-bold flex items-center justify-center mb-4">1</div>
+              <h3 className="font-semibold text-white text-sm mb-2">We watch the market 24/7</h3>
+              <p className="text-gray-500 text-xs leading-relaxed">PumpRadar tracks 100+ Solana memecoins every 5 minutes — price, volume, liquidity, and transactions.</p>
+            </div>
+            <div className="bg-white/3 border border-white/6 rounded-2xl p-6">
+              <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 text-xs font-bold flex items-center justify-center mb-4">2</div>
+              <h3 className="font-semibold text-white text-sm mb-2">Our engine scores every coin</h3>
+              <p className="text-gray-500 text-xs leading-relaxed">Safety score checks for rugs. Momentum score detects coins gaining traction on 5m and 1h before the 24h pump.</p>
+            </div>
+            <div className="bg-white/3 border border-white/6 rounded-2xl p-6">
+              <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 text-xs font-bold flex items-center justify-center mb-4">3</div>
+              <h3 className="font-semibold text-white text-sm mb-2">You get the signal instantly</h3>
+              <p className="text-gray-500 text-xs leading-relaxed">When a coin hits Buy Now, you get a Telegram alert. Track your holding and get take profit alerts at +10%, +20%, +50% and beyond.</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Features */}
-      <div className="px-4 md:px-10 pb-20 md:pb-28">
+      <div className="px-4 md:px-10 pb-16 md:pb-20">
         <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4">
 
           <div className="bg-white/3 border border-white/6 rounded-2xl p-6">
@@ -83,8 +143,8 @@ export default function LandingPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
-            <h3 className="font-semibold text-white text-sm mb-1">Safety scoring</h3>
-            <p className="text-gray-500 text-xs leading-relaxed">Every coin gets a safety score based on liquidity and buy/sell ratio so you can avoid rugs.</p>
+            <h3 className="font-semibold text-white text-sm mb-1">Rug protection</h3>
+            <p className="text-gray-500 text-xs leading-relaxed">Every coin gets a safety score based on liquidity depth and buy/sell ratio so you can spot and avoid rugs.</p>
           </div>
 
           <div className="bg-white/3 border border-white/6 rounded-2xl p-6">
@@ -94,11 +154,27 @@ export default function LandingPage() {
               </svg>
             </div>
             <h3 className="font-semibold text-white text-sm mb-1">Telegram alerts</h3>
-            <p className="text-gray-500 text-xs leading-relaxed">Get notified the moment a coin flips to &quot;Buy Now&quot;, straight to your Telegram. No need to check the app.</p>
+            <p className="text-gray-500 text-xs leading-relaxed">Buy Now, take profit at every milestone, and sell alerts when a coin turns bad — all instant on Telegram.</p>
           </div>
 
         </div>
       </div>
+
+      {/* Bottom CTA */}
+      {!session && (
+        <div className="px-4 md:px-10 pb-20">
+          <div className="max-w-2xl mx-auto bg-cyan-500/5 border border-cyan-500/20 rounded-3xl p-8 md:p-10 text-center">
+            <h2 className="text-xl md:text-2xl font-bold text-white mb-3">Start catching pumps today</h2>
+            <p className="text-gray-400 text-sm mb-6">Free to use. Sign in with Google, connect Telegram, and let PumpRadar do the work.</p>
+            <Link href="/sign-in" className="cursor-pointer inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-3 px-8 rounded-2xl transition-all text-sm">
+              Get Started — it&apos;s free
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="border-t border-white/5 px-4 py-5 text-center text-xs text-gray-700">
