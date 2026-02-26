@@ -55,7 +55,7 @@ export default function LandingPage() {
           </Link>
         ) : (
           <Link href="/sign-in" className="cursor-pointer flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-3 px-8 rounded-2xl transition-all text-sm">
-            Get Started — it&apos;s free
+            Get Started, it&apos;s free
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
@@ -74,7 +74,7 @@ export default function LandingPage() {
               </svg>
             </div>
             <h3 className="font-semibold text-white text-sm mb-1">Buy Now signals</h3>
-            <p className="text-gray-500 text-xs leading-relaxed">We detect coins gaining momentum on 5m and 1h but not yet pumped on 24h — that&apos;s your window.</p>
+            <p className="text-gray-500 text-xs leading-relaxed">We detect coins gaining momentum on 5m and 1h but not yet pumped on 24h. That&apos;s your window.</p>
           </div>
 
           <div className="bg-white/3 border border-white/6 rounded-2xl p-6">
@@ -94,7 +94,7 @@ export default function LandingPage() {
               </svg>
             </div>
             <h3 className="font-semibold text-white text-sm mb-1">Telegram alerts</h3>
-            <p className="text-gray-500 text-xs leading-relaxed">Get notified the moment a coin flips to &quot;Buy Now&quot; — straight to your Telegram, no need to check the app.</p>
+            <p className="text-gray-500 text-xs leading-relaxed">Get notified the moment a coin flips to &quot;Buy Now&quot;, straight to your Telegram. No need to check the app.</p>
           </div>
 
         </div>
@@ -102,7 +102,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <div className="border-t border-white/5 px-4 py-5 text-center text-xs text-gray-700">
-        Not financial advice. Memecoins are high-risk — only invest what you can afford to lose.
+        Not financial advice. Memecoins are high-risk. Only invest what you can afford to lose.
       </div>
 
     </div>

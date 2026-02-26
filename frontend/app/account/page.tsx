@@ -106,13 +106,13 @@ export default function AccountPage() {
               {connected ? (
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                  <span className="text-emerald-400 text-sm font-medium">Connected — Buy Now alerts are active</span>
+                  <span className="text-emerald-400 text-sm font-medium">Connected. Buy Now alerts are active</span>
                 </div>
               ) : (
                 <>
                   <p className="text-gray-400 text-xs mb-3 leading-relaxed">
                     1. Open Telegram and start <span className="text-white font-medium">@PumpRadarAlerts_bot</span><br />
-                    2. Send <span className="font-mono text-cyan-400">/start</span> — the bot will reply with your Chat ID<br />
+                    2. Send <span className="font-mono text-cyan-400">/start</span> and the bot will reply with your Chat ID<br />
                     3. Paste your Chat ID below
                   </p>
                   <div className="flex gap-2">

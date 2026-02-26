@@ -302,7 +302,7 @@ export default function CoinPage() {
                 </a>
               ) : (
                 <div className="flex items-center justify-center gap-2 bg-white/4 border border-white/6 text-gray-600 font-semibold py-3.5 px-5 rounded-2xl text-sm w-full cursor-not-allowed">
-                  {signal === 'Too Late' ? 'Already pumped — not recommended to buy' : 'Not recommended to buy'}
+                  {signal === 'Too Late' ? 'Already pumped. Not recommended to buy' : 'Not recommended to buy'}
                 </div>
               )}
             </div>
