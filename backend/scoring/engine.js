@@ -73,7 +73,7 @@ function calcSignal(safety, momentum, composite, metric) {
 
   if (h24 > 150) return 'Too Late';
 
-  if (safety >= 30 && momentum >= 45 && h24 <= 50 && (h1 >= 5 || m5 >= 3)) return 'Buy Now';
+  if (safety >= 40 && momentum >= 45 && h24 >= -40 && h24 <= 50 && (h1 >= 5 || m5 >= 3)) return 'Buy Now';
 
   if (composite >= 30 && momentum >= 20) return 'Keep Watching';
 
