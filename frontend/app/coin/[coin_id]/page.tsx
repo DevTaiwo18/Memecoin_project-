@@ -126,10 +126,19 @@ export default function CoinPage() {
   const [showBuyForm, setShowBuyForm] = useState(false);
   const [amountInput, setAmountInput] = useState('');
   const [holdingStatus, setHoldingStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [usdAmount, setUsdAmount] = useState('');
+  const [solPrice, setSolPrice] = useState<number | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') router.replace('/sign-in');
   }, [status, router]);
+
+  useEffect(() => {
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd')
+      .then(r => r.json())
+      .then(data => setSolPrice(data?.solana?.usd ?? null))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     async function fetchCoin() {
@@ -329,20 +338,47 @@ export default function CoinPage() {
               </div>
             </div>
 
-            {/* Buy button */}
-            {!isHolding && <div className="mb-5">
+            {/* SOL Calculator + Buy button */}
+            {!isHolding && <div className="mb-5 flex flex-col gap-3">
               {signal === 'Buy Now' || signal === 'Keep Watching' ? (
-                <a
-                  href={`https://photon-sol.tinyastro.io/en/lp/${coin.contract_address}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="cursor-pointer flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3.5 px-5 rounded-2xl transition-all text-sm w-full"
-                >
-                  Buy on Photon
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
+                <>
+                  <div className="bg-white/3 border border-white/8 rounded-2xl p-4">
+                    <div className="text-gray-400 text-xs font-medium mb-2">How much do you want to spend?</div>
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                        <input
+                          type="number"
+                          value={usdAmount}
+                          onChange={e => setUsdAmount(e.target.value)}
+                          placeholder="10"
+                          className="w-full bg-white/5 border border-white/10 rounded-xl pl-7 pr-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-white/20"
+                        />
+                      </div>
+                      <div className="text-right shrink-0">
+                        {usdAmount && solPrice ? (
+                          <>
+                            <div className="text-white font-bold text-sm">≈ {(parseFloat(usdAmount) / solPrice).toFixed(4)} SOL</div>
+                            <div className="text-gray-600 text-xs">@ ${solPrice.toLocaleString()}/SOL</div>
+                          </>
+                        ) : (
+                          <div className="text-gray-600 text-xs">Enter amount</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <a
+                    href={`https://photon-sol.tinyastro.io/en/lp/${coin.contract_address}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cursor-pointer flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3.5 px-5 rounded-2xl transition-all text-sm w-full"
+                  >
+                    Buy on Photon
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                </>
               ) : (
                 <div className="flex items-center justify-center gap-2 bg-white/4 border border-white/6 text-gray-600 font-semibold py-3.5 px-5 rounded-2xl text-sm w-full cursor-not-allowed">
                   {signal === 'Too Late' ? 'Already pumped. Not recommended to buy' : 'Not recommended to buy'}
