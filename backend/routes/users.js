@@ -59,7 +59,7 @@ router.post('/holdings', async (req, res) => {
     const user = await User.findOne({ google_id });
     if (!user) return res.status(404).json({ success: false, error: 'User not found' });
 
-    const existing = user.holdings.find(h => h.coin_id === coin_id);
+    const existing = user.holdings.find(h => h.coin_id === coin_id && !h.is_sold);
     if (existing) {
       existing.amount_invested = amount_invested;
       existing.buy_price = buy_price;
@@ -74,14 +74,21 @@ router.post('/holdings', async (req, res) => {
   }
 });
 
-// Remove a holding (user sold)
+// Mark a holding as sold (keeps it in history)
 router.delete('/holdings/:google_id/:coin_id', async (req, res) => {
   try {
     const { google_id, coin_id } = req.params;
+    const { sell_price } = req.body;
     const user = await User.findOne({ google_id });
     if (!user) return res.status(404).json({ success: false, error: 'User not found' });
 
-    user.holdings = user.holdings.filter(h => h.coin_id !== coin_id);
+    const holding = user.holdings.find(h => h.coin_id === coin_id && !h.is_sold);
+    if (!holding) return res.status(404).json({ success: false, error: 'Holding not found' });
+
+    holding.is_sold = true;
+    holding.sell_price = sell_price || null;
+    holding.sold_at = new Date();
+    user.markModified('holdings');
     await user.save();
     res.json({ success: true, data: user.holdings });
   } catch (err) {

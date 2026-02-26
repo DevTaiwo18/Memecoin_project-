@@ -7,6 +7,9 @@ const HoldingSchema = new mongoose.Schema({
   bought_at:        { type: Date, default: Date.now },
   sell_alerted:          { type: Boolean, default: false },
   take_profit_alerted:   { type: Number, default: 0 },
+  is_sold:               { type: Boolean, default: false },
+  sell_price:            { type: Number, default: null },
+  sold_at:               { type: Date, default: null },
 });
 
 const UserSchema = new mongoose.Schema({

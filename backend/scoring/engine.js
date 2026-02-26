@@ -113,7 +113,7 @@ async function runScoringEngine() {
 
       if (signal === 'Buy Now' && wasNotBuyNow && usersWithTelegram.length > 0) {
         for (const user of usersWithTelegram) {
-          const alreadyHolding = user.holdings && user.holdings.some(h => h.coin_id === coin_id);
+          const alreadyHolding = user.holdings && user.holdings.some(h => h.coin_id === coin_id && !h.is_sold);
           if (alreadyHolding) continue;
           sendBuyNowAlert(user.telegram_chat_id, coinData).catch(err =>
             console.error(`[Telegram] Failed to alert ${user.telegram_chat_id}:`, err.message)
@@ -125,10 +125,10 @@ async function runScoringEngine() {
       if (isSellSignal) {
         const usersHolding = await User.find({
           telegram_chat_id: { $ne: null },
-          holdings: { $elemMatch: { coin_id, sell_alerted: false } },
+          holdings: { $elemMatch: { coin_id, sell_alerted: false, is_sold: false } },
         });
         for (const user of usersHolding) {
-          const holding = user.holdings.find(h => h.coin_id === coin_id && !h.sell_alerted);
+          const holding = user.holdings.find(h => h.coin_id === coin_id && !h.sell_alerted && !h.is_sold);
           if (!holding) continue;
           const coinsHeld = holding.amount_invested / holding.buy_price;
           const currentValue = coinsHeld * metric.price;
@@ -147,10 +147,10 @@ async function runScoringEngine() {
       const TAKE_PROFIT_MILESTONES = [10, 20, 30, 50, 100, 200];
       const usersHoldingForProfit = await User.find({
         telegram_chat_id: { $ne: null },
-        holdings: { $elemMatch: { coin_id } },
+        holdings: { $elemMatch: { coin_id, is_sold: false } },
       });
       for (const user of usersHoldingForProfit) {
-        const holding = user.holdings.find(h => h.coin_id === coin_id);
+        const holding = user.holdings.find(h => h.coin_id === coin_id && !h.is_sold);
         if (!holding) continue;
         const pnlPct = ((metric.price - holding.buy_price) / holding.buy_price) * 100;
         const milestone = [...TAKE_PROFIT_MILESTONES].reverse().find(m => pnlPct >= m);
