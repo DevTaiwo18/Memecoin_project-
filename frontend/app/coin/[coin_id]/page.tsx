@@ -128,6 +128,7 @@ export default function CoinPage() {
   const [holdingStatus, setHoldingStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [usdAmount, setUsdAmount] = useState('');
   const [solPrice, setSolPrice] = useState<number | null>(null);
+  const [copiedSol, setCopiedSol] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') router.replace('/sign-in');
@@ -355,11 +356,23 @@ export default function CoinPage() {
                           className="w-full bg-white/5 border border-white/10 rounded-xl pl-7 pr-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-white/20"
                         />
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="text-right shrink-0 flex items-center gap-2">
                         {usdAmount && solPrice ? (
                           <>
-                            <div className="text-white font-bold text-sm">≈ {(parseFloat(usdAmount) / solPrice).toFixed(4)} SOL</div>
-                            <div className="text-gray-600 text-xs">@ ${solPrice.toLocaleString()}/SOL</div>
+                            <div>
+                              <div className="text-white font-bold text-sm">≈ {(parseFloat(usdAmount) / solPrice).toFixed(4)} SOL</div>
+                              <div className="text-gray-600 text-xs">@ ${solPrice.toLocaleString()}/SOL</div>
+                            </div>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText((parseFloat(usdAmount) / solPrice).toFixed(4));
+                                setCopiedSol(true);
+                                setTimeout(() => setCopiedSol(false), 2000);
+                              }}
+                              className="cursor-pointer shrink-0 text-xs px-2.5 py-1.5 rounded-lg bg-white/6 text-gray-300 hover:bg-white/10 transition-all font-medium"
+                            >
+                              {copiedSol ? 'Copied!' : 'Copy'}
+                            </button>
                           </>
                         ) : (
                           <div className="text-gray-600 text-xs">Enter amount</div>
