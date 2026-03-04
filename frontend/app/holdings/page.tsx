@@ -260,8 +260,8 @@ export default function HoldingsPage() {
                             </div>
                           )}
                           <div className="min-w-0">
-                            <div className="text-white font-bold text-sm">{coin?.symbol || h.coin_id}</div>
-                            <div className="text-gray-600 text-xs truncate">{coin?.name}</div>
+                            <div className="text-white font-bold text-sm">{coin?.symbol || `${h.coin_id.slice(0, 4)}...${h.coin_id.slice(-4)}`}</div>
+                            <div className="text-gray-600 text-xs truncate">{coin?.name || 'Delisted coin'}</div>
                           </div>
                         </div>
 

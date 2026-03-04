@@ -112,7 +112,7 @@ export default function Dashboard() {
       .catch(() => {});
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/holdings/${google_id}`)
       .then(r => r.json())
-      .then(data => { if (data.success) setHeldCoinIds(new Set((data.data || []).map((h: { coin_id: string }) => h.coin_id))); })
+      .then(data => { if (data.success) setHeldCoinIds(new Set((data.data || []).filter((h: { is_sold?: boolean }) => !h.is_sold).map((h: { coin_id: string }) => h.coin_id))); })
       .catch(() => {});
   }, [session]);
 
