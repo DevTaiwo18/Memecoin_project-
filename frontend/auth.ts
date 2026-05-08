@@ -35,6 +35,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               email: user.email,
               image: user.image,
             }),
+            signal: AbortSignal.timeout(8000),
           });
           await res.json();
         } catch (err) {
